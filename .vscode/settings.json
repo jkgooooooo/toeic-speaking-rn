@@ -3,5 +3,7 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "rnEasyEmulator.androidSdkHome": "/Users/k/Library/Android/sdk",
+  "rnEasyEmulator.androidRunCommand": "ANDROID_HOME=/Users/k/Library/Android/sdk ANDROID_SDK_ROOT=/Users/k/Library/Android/sdk ANDROID_SERIAL={{deviceId}} npx expo run:android"
 }

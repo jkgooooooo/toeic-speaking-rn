@@ -1,4 +1,5 @@
 import * as Speech from 'expo-speech';
+import { Platform } from 'react-native';
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
 
 type VoiceSettings = { voices: Speech.Voice[]; voiceId?: string; loading: boolean; error: string | null; selectVoice: (id: string) => void; refresh: () => Promise<void> };
@@ -6,14 +7,14 @@ const SettingsContext = createContext<VoiceSettings | null>(null);
 
 export function SettingsProvider({ children }: PropsWithChildren) {
   const [voices, setVoices] = useState<Speech.Voice[]>([]);
-  const [voiceId, selectVoice] = useState<string>();
+  const [voiceId, selectVoice] = useState<string | undefined>(Platform.OS === 'ios' ? 'supertonic-f1' : undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const applyVoices = useCallback((list: Speech.Voice[]) => {
     const available = list.filter(v => /^en([-_]|$)/i.test(v.language));
     setVoices(available);
     setError(available.length ? null : '기기에서 영어 음성을 찾지 못했어요. 기기의 음성 설정에서 영어 음성을 추가해주세요.');
-    selectVoice(current => available.some(v => v.identifier === current) ? current : available.find(v => v.language.toLowerCase() === 'en-us')?.identifier ?? available[0]?.identifier);
+    selectVoice(current => current?.startsWith('supertonic-') || available.some(v => v.identifier === current) ? current : available.find(v => v.language.toLowerCase() === 'en-us')?.identifier ?? available[0]?.identifier);
   }, []);
   async function refresh() {
     setLoading(true);

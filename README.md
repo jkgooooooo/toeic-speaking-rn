@@ -7,7 +7,7 @@ React Native + Expo로 만드는 토익스피킹 형식 연습 앱. 사용자가
 - 학습·모의고사·기록 탭과 앱에 포함된 Pretendard 글꼴
 - Q5–7 오리지널 질문 3개: 질문 음성 → 준비 3초 → 시작 신호 → 답변 녹음
 - 답변 시간 15초·15초·30초, 기기 내 파일 보관과 다시 듣기
-- 시스템 영어 음성 선택·미리듣기
+- iOS Supertonic F1·M1 및 시스템 영어 음성 선택·미리듣기
 - 설정에서 Q5 한 문항만 실행하는 오디오 확인
 - 취소·백그라운드 진입 시 중단 처리
 
@@ -93,3 +93,9 @@ assets/fonts/                   Pretendard와 OFL 고지
 - [Pretendard 1.3.9](https://github.com/orioncactus/pretendard/releases/tag/v1.3.9): SIL Open Font License, 앱에 고지 포함
 
 앱 질문과 시작 신호는 이 프로젝트에서 작성·생성했다. 참조 영상의 시험 음성·문항·사진을 복사해 포함하지 않았다.
+
+## 기본 질문 음성
+
+iOS에서 Supertonic 3 모델을 최초 1회 약 400MB 내려받고 SHA-256을 확인한다. 이후 F1·M1 중 선택한 목소리로 영어 문장을 기기에서 생성한다. Android는 시스템 음성을 사용한다. 음성 선택은 앱 실행 중에만 유지된다. 네이티브 모듈 변경 후 CocoaPods 설치와 개발 빌드 재설치가 필요하다. 실기기 동작은 확인 전이다.
+
+모델: Supertone Supertonic 3, OpenRAIL-M; 모델 라이선스는 `assets/audio/supertonic/LICENSE-OpenRAIL-M.txt`를 참고한다. 합성에 사용한 예제 코드는 MIT 라이선스다.

@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { dailyPractice, type PracticeQuestion } from '@/content/daily';
+import { speakSupertonic } from '@/services/supertonic';
 import { checkSignal, playCue, SessionInterrupted, speak, waitForDeadline } from '@/services/audio-tasks';
 import { type AnswerRecord, saveAnswer } from '@/services/recordings';
 
@@ -17,6 +18,7 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
   const statusHandler = useRef<((status: RecordingStatus) => void) | null>(null);
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, directory: 'document', isMeteringEnabled: true }, status => statusHandler.current?.(status));
   const cue = useAudioPlayer(require('../../../assets/audio/start-tone.wav'), { updateInterval: 20, keepAudioSessionActive: true });
+  const narration = useAudioPlayer(null, { updateInterval: 50, keepAudioSessionActive: true });
   const controller = useRef<AbortController | null>(null);
   const running = useRef(false);
   const mounted = useRef(true);
@@ -109,7 +111,11 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
       await activateKeepAwakeAsync(audioTag);
       checkSignal(signal);
       update({ phase: 'directions' });
-      if (questions.length > 1) await speak(dailyPractice.directions, voiceId, signal);
+      async function narrate(text: string) {
+        if (voiceId!.startsWith('supertonic-')) await speakSupertonic(narration, text, voiceId!, signal);
+        else await speak(text, voiceId!, signal);
+      }
+      if (questions.length > 1) await narrate(dailyPractice.directions);
       for (let index = 0; index < questions.length; index++) {
         const current = questions[index];
         checkSignal(signal);
@@ -117,7 +123,7 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
         // Prepare before the question; preparation must not consume the three-second pause.
         await recorder.prepareToRecordAsync();
         checkSignal(signal);
-        await speak(current.prompt, voiceId, signal);
+        await narrate(current.prompt);
         checkSignal(signal);
         update({ phase: 'preparing', remaining: current.preparationSeconds });
         await waitForDeadline(current.preparationSeconds * 1000, signal, remaining => update({ remaining }));
@@ -143,7 +149,7 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
       update({ phase: error instanceof SessionInterrupted ? 'interrupted' : 'failed', error: error instanceof Error ? error.message : '연습을 계속할 수 없어요. 다시 시도해주세요.', answers: [...answers] });
     } finally {
       statusHandler.current = null;
-      try { cue.pause(); } catch {}
+      try { cue.pause(); narration.pause(); } catch {}
       await Speech.stop().catch(() => {});
       await stopRecorder();
       await setAudioModeAsync({ allowsRecording: false, interruptionMode: 'mixWithOthers', shouldPlayInBackground: false }).catch(() => {});

@@ -18,7 +18,7 @@ const phaseLabel: Record<Phase, string> = {
 export default function PracticeScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const questions = mode === 'single' ? dailyPractice.questions.slice(0, 1) : dailyPractice.questions;
-  const { voiceId, voices, loading, error } = useVoiceSettings();
+  const { voiceId, loading, error } = useVoiceSettings();
   const session = usePracticeSession(questions, voiceId);
   const c = usePalette();
   function leave() {
@@ -44,10 +44,10 @@ export default function PracticeScreen() {
     {session.phase === 'idle' ? <>
       <Title subtitle={mode === 'single' ? '질문 음성부터 녹음·재생까지 한 문항으로 확인해요.' : '질문 3개에 차례대로 답해봐요. 준비되면 시작하세요.'}>{'일상에 대해\n말해볼까요?'}</Title>
       <View style={{ padding: 23, borderRadius: 26, backgroundColor: c.accent, gap: 13 }}><Label style={{ fontSize: 11, letterSpacing: 1.2, color: c.accentInk, fontFamily: fonts.bold }}>TODAY’S PRACTICE</Label><Label style={{ color: c.accentInk, fontSize: 23, lineHeight: 34, fontFamily: fonts.medium }}>{questions[0].prompt}</Label><Label style={{ fontSize: 12, color: c.accentInk }}>준비 3초 · 답변 {questions.map(q => q.responseSeconds).join(' / ')}초</Label></View>
-      <Notice>처음 시작할 때 마이크 권한을 요청해요. iPhone은 무음 모드를 해제하고, 이어폰을 사용해주세요.</Notice>
+      <Notice>처음 시작할 때 마이크 권한을 요청해요. iPhone의 Supertonic 음성은 처음 사용할 때 약 400MB를 내려받아요. 이어폰을 사용해주세요.</Notice>
       {Platform.OS === 'web' && <Notice>홈과 화면 구성은 웹에서도 볼 수 있어요. 녹음 연습은 iOS·Android 앱에서 시작해주세요.</Notice>}
-      {error && <Notice error>{error}</Notice>}
-      <ActionButton title="준비됐어요, 시작할게요" icon="mic-outline" busy={loading} disabled={!voices.length || Platform.OS === 'web'} onPress={() => { void session.start(); }} />
+      {error && !voiceId?.startsWith('supertonic-') && <Notice error>{error}</Notice>}
+      <ActionButton title="준비됐어요, 시작할게요" icon="mic-outline" busy={loading && !voiceId} disabled={!voiceId || Platform.OS === 'web'} onPress={() => { void session.start(); }} />
     </> : <>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><Label style={{ fontFamily: fonts.bold, color: c.muted }}>QUESTION {session.question.number.toString().padStart(2, '0')}</Label><Label style={{ fontSize: 13, color: c.muted }}>{session.index + 1} / {questions.length}</Label></View>
       <Label style={{ fontSize: 25, lineHeight: 38, fontFamily: fonts.medium, letterSpacing: -0.5 }}>{session.question.prompt}</Label>

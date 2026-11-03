@@ -8,6 +8,21 @@ import { type AnswerRecord, recordingUri } from '@/services/recordings';
 
 function timestamp(value: number) { return `${Math.floor(value / 60).toString().padStart(2, '0')}:${Math.floor(value % 60).toString().padStart(2, '0')}`; }
 let activePlayer: AudioPlayer | null = null;
+let activeExample: AbortController | null = null;
+
+export function registerExamplePlayback(controller: AbortController) {
+  activeExample?.abort();
+  activeExample = controller;
+}
+export function clearExamplePlayback(controller: AbortController) {
+  if (activeExample === controller) activeExample = null;
+}
+function stopExamplePlayback() { activeExample?.abort(); activeExample = null; }
+
+export function stopActiveAnswerPlayer() {
+  if (activePlayer) { try { activePlayer.pause(); } catch {} }
+  activePlayer = null;
+}
 
 export function AnswerPlayer({ answer }: { answer: AnswerRecord }) {
   const c = usePalette();
@@ -20,6 +35,7 @@ export function AnswerPlayer({ answer }: { answer: AnswerRecord }) {
       setError(null);
       if (status.playing) player.pause();
       else {
+        stopExamplePlayback();
         if (activePlayer && activePlayer !== player) { try { activePlayer.pause(); } catch {} }
         activePlayer = player;
         if (status.didJustFinish || status.currentTime >= status.duration) await player.seekTo(0);

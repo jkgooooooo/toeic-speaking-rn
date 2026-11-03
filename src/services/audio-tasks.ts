@@ -71,7 +71,7 @@ export async function playCue(player: AudioPlayer, signal: AbortSignal) {
   });
 }
 
-export function playVoiceAsset(player: AudioPlayer, source: AudioSource, signal: AbortSignal) {
+export function playVoiceAsset(player: AudioPlayer, source: AudioSource, signal: AbortSignal, onPlaying?: () => void) {
   return new Promise<void>((resolve, reject) => {
     let settled = false;
     let started = false;
@@ -85,7 +85,11 @@ export function playVoiceAsset(player: AudioPlayer, source: AudioSource, signal:
     const subscription = player.addListener('playbackStatusUpdate', status => {
       if (status.error) finish(new Error('안내 음성을 재생하지 못했어요.'));
       else if (started && status.didJustFinish) finish();
-      else if (!started && status.isLoaded) { started = true; player.play(); }
+      else if (!started && status.isLoaded) {
+        started = true;
+        try { player.play(); onPlaying?.(); }
+        catch (error) { finish(error instanceof Error ? error : new Error('안내 음성을 재생하지 못했어요.')); }
+      }
     });
     const timeout = setTimeout(() => finish(new Error('안내 음성 재생이 중단됐어요.')), 60000);
     if (signal.aborted) { abort(); return; }

@@ -5,16 +5,18 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { dailyPractice, type PracticeQuestion } from '@/content/daily';
-import { speakSupertonic } from '@/services/supertonic';
+import { speakSupertonic, warmSupertonic, type VoiceStage } from '@/services/supertonic';
 import { checkSignal, playCue, SessionInterrupted, speak, waitForDeadline } from '@/services/audio-tasks';
 import { type AnswerRecord, saveAnswer } from '@/services/recordings';
 
-export type Phase = 'idle' | 'permission' | 'directions' | 'question' | 'preparing' | 'cue' | 'recording' | 'saving' | 'completed' | 'interrupted' | 'failed';
+export type Phase = 'idle' | 'permission' | 'voice_setup' | 'directions' | 'question' | 'preparing' | 'cue' | 'recording' | 'saving' | 'completed' | 'interrupted' | 'failed';
 type Snapshot = { phase: Phase; index: number; remaining: number; answers: AnswerRecord[]; error: string | null };
 const initial: Snapshot = { phase: 'idle', index: 0, remaining: 0, answers: [], error: null };
 
 export function usePracticeSession(questions: PracticeQuestion[], voiceId?: string) {
   const [snapshot, setSnapshot] = useState<Snapshot>(initial);
+  const [voiceStage, setVoiceStage] = useState<VoiceStage | null>(null);
+  const [voicePreparation, setVoicePreparation] = useState<{ completed: number; total: number } | null>(null);
   const statusHandler = useRef<((status: RecordingStatus) => void) | null>(null);
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, directory: 'document', isMeteringEnabled: true }, status => statusHandler.current?.(status));
   const cue = useAudioPlayer(require('../../../assets/audio/start-tone.wav'), { updateInterval: 20, keepAudioSessionActive: true });
@@ -94,9 +96,14 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
     if (Platform.OS === 'web') { update({ phase: 'failed', error: '녹음 연습은 iOS·Android 앱에서 사용할 수 있어요.' }); return; }
     if (!voiceId) { update({ phase: 'failed', error: '기기에 영어 안내 음성을 설치하고 설정에서 선택해주세요.' }); return; }
     running.current = true;
+    setVoiceStage(null);
+    setVoicePreparation(null);
     const abort = new AbortController();
     controller.current = abort;
     const { signal } = abort;
+    const prefetch = new AbortController();
+    const stopPrefetch = () => prefetch.abort(signal.reason);
+    signal.addEventListener('abort', stopPrefetch, { once: true });
     const sessionId = `daily-${Date.now()}`;
     const answers: AnswerRecord[] = [];
     update({ ...initial, phase: 'permission' });
@@ -110,10 +117,27 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
       checkSignal(signal);
       await activateKeepAwakeAsync(audioTag);
       checkSignal(signal);
+      if (voiceId.startsWith('supertonic-')) {
+        update({ phase: 'voice_setup' });
+        const firstText = questions.length > 1 ? dailyPractice.directions : questions[0].prompt;
+        await warmSupertonic([firstText], voiceId, signal,
+          (completed, total) => { if (mounted.current && !signal.aborted) setVoicePreparation({ completed, total }); },
+          stage => { if (mounted.current && !signal.aborted) setVoiceStage(stage); });
+        checkSignal(signal);
+        setVoiceStage(null);
+        // Prepare upcoming questions in order while the current audio and timers run.
+        const upcoming = [...new Set(questions.map(item => item.prompt).filter(text => text !== firstText))];
+        void warmSupertonic(upcoming, voiceId, prefetch.signal, () => {}).catch(() => {});
+      }
       update({ phase: 'directions' });
       async function narrate(text: string) {
-        if (voiceId!.startsWith('supertonic-')) await speakSupertonic(narration, text, voiceId!, signal);
-        else await speak(text, voiceId!, signal);
+        if (voiceId!.startsWith('supertonic-')) {
+          try {
+            await speakSupertonic(narration, text, voiceId!, signal, stage => {
+              if (mounted.current && !signal.aborted) setVoiceStage(stage);
+            });
+          } finally { if (mounted.current) setVoiceStage(null); }
+        } else await speak(text, voiceId!, signal);
       }
       if (questions.length > 1) await narrate(dailyPractice.directions);
       for (let index = 0; index < questions.length; index++) {
@@ -148,6 +172,9 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
     } catch (error) {
       update({ phase: error instanceof SessionInterrupted ? 'interrupted' : 'failed', error: error instanceof Error ? error.message : '연습을 계속할 수 없어요. 다시 시도해주세요.', answers: [...answers] });
     } finally {
+      signal.removeEventListener('abort', stopPrefetch);
+      prefetch.abort();
+      if (mounted.current) setVoiceStage(null);
       statusHandler.current = null;
       try { cue.pause(); narration.pause(); } catch {}
       await Speech.stop().catch(() => {});
@@ -159,5 +186,5 @@ export function usePracticeSession(questions: PracticeQuestion[], voiceId?: stri
     }
   }
 
-  return { ...snapshot, question, active, start, interrupt, metering: () => recorder.getStatus().metering };
+  return { ...snapshot, question, active, voiceStage, voicePreparation, start, interrupt, metering: () => recorder.getStatus().metering };
 }

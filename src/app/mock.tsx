@@ -10,7 +10,7 @@ import { PartGuide } from '@/components/part-guide';
 import { VoiceStartOptions } from '@/components/voice-start-options';
 import { AnswerPlayer } from '@/components/answer-player';
 import { ActionButton, Icon, Label, Notice, Screen, Title, TopBar } from '@/components/ui';
-import { getMockSet, mockDirections, mockSets, type MockPart } from '@/content/mock';
+import { getMockSet, mockDirections, mockSets, practiceDirections, type MockPart } from '@/content/mock';
 import { fonts, usePalette } from '@/design/theme';
 import { type MockPhase, useMockSession } from '@/features/mock/use-mock-session';
 import { listAnswers, type AnswerRecord } from '@/services/recordings';
@@ -66,11 +66,12 @@ export default function MockScreen() {
     return () => subscription.remove();
   });
   if (session.phase === 'completed') return <Screen>
-    <TopBar title="모의고사 완료" back />
+    <TopBar title={partial ? "연습 완료" : "모의고사 완료"} back />
     <View style={{ width: 62, height: 62, borderRadius: 22, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' }}><Icon name="checkmark-outline" color={c.accentInk} size={30} /></View>
-    <Title subtitle={`답변 ${session.answers.length}개를 저장했어요. 듣고 싶은 답변을 골라보세요.`}>{'한 회를 끝까지,\n수고했어요.'}</Title>
+    <Title subtitle={`답변 ${session.answers.length}개를 저장했어요. 듣고 싶은 답변을 골라보세요.`}>{partial ? '한 번 말해봤어요,\n수고했어요.' : '한 회를 끝까지,\n수고했어요.'}</Title>
     {previousAnswer && session.answers.length === 1 && <AnswerComparison previous={previousAnswer} current={session.answers[0]} />}
-    {session.answers.map(answer => previousAnswer && session.answers.length === 1 ? <QuestionReview key={answer.id} question={answer.question} answerId={answer.id} /> : <View key={answer.id}>
+    {partial && session.answers.length === 1 && !previousAnswer && <View style={{ gap: 12 }}><AnswerPlayer answer={session.answers[0]} /><QuestionReview question={session.answers[0].question} answerId={session.answers[0].id} /></View>}
+    {session.answers.map(answer => partial && session.answers.length === 1 && !previousAnswer ? null : previousAnswer && session.answers.length === 1 ? <QuestionReview key={answer.id} question={answer.question} answerId={answer.id} /> : <View key={answer.id}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: selected === answer.id }} onPress={() => setSelected(current => current === answer.id ? null : answer.id)} style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.line, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Icon name="headset-outline" color={c.primary} /><Label style={{ flex: 1, fontFamily: fonts.bold }}>Q{answer.question.number}. 답변 듣기</Label><Icon name={selected === answer.id ? 'chevron-up-outline' : 'chevron-down-outline'} size={17} />
       </Pressable>
@@ -83,7 +84,7 @@ export default function MockScreen() {
   return <Screen>
     <TopBar title={partial ? "파트 연습" : "실전 모의고사"} back onBack={leave} />
     {['idle', 'interrupted', 'failed'].includes(session.phase) ? <>
-      <Title subtitle={`${set.questions.length}문항이 자동으로 이어져요. 편한 장소에서 시작해요.`}>{partial ? '원하는 파트부터,\n차근차근.' : '차근차근,\n끝까지 한 회.'}</Title>
+      <Title subtitle={partial && set.questions.length === 1 ? '한 문항을 편하게 연습해요.' : `${set.questions.length}문항이 자동으로 이어져요. 편한 장소에서 시작해요.`}>{partial ? '원하는 파트부터,\n차근차근.' : '차근차근,\n끝까지 한 회.'}</Title>
       <View style={{ borderRadius: 24, backgroundColor: c.accent, padding: 22, gap: 10 }}>
         <Label style={{ fontFamily: fonts.bold, fontSize: 18, color: c.accentInk }}>{set.title}</Label>
         <Label style={{ color: c.accentInk }}>{partial ? partLabel[filtered[0].part] : '지문 읽기 · 사진 묘사 · 질문 답변 · 자료 활용 · 의견 제시'}</Label>
@@ -108,7 +109,7 @@ export default function MockScreen() {
           <Label style={{ fontFamily: fonts.bold, color: c.muted }}>QUESTION {session.question.number.toString().padStart(2, '0')}</Label>
           <Label style={{ fontSize: 13, color: c.muted }}>{partLabel[session.question.part]} · {session.index + 1}/{set.questions.length}</Label>
         </View>
-        {session.phase === 'directions' && <Label style={{ fontSize: 18, lineHeight: 28 }}>{mockDirections[session.question.part]}</Label>}
+        {session.phase === 'directions' && <Label style={{ fontSize: 18, lineHeight: 28 }}>{partial ? practiceDirections(session.question, set.questions.length === 1) : mockDirections[session.question.part]}</Label>}
         {showContent && session.question.part === 'short' && <Label style={{ color: c.muted, fontSize: 14, lineHeight: 22 }}>{set.shortContext}</Label>}
         {showContent && session.question.image && <Image source={session.question.image} contentFit="contain" accessibilityLabel={session.question.imageLabel ?? '사진 묘사 문제'} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 18, backgroundColor: c.panel }} />}
         {showContent && session.question.part === 'table' && <View style={{ backgroundColor: c.panel, borderRadius: 20, padding: 18, gap: 8 }}>

@@ -8,6 +8,7 @@ import { AnswerPlayer, stopActiveAnswerPlayer } from '@/components/answer-player
 import { ActionButton, Icon, Label, Notice, Screen, TopBar } from '@/components/ui';
 import { dailyPractice } from '@/content/daily';
 import { mockSets } from '@/content/mock';
+import { partPracticeSets } from '@/content/part-practice';
 import { fonts, usePalette } from '@/design/theme';
 import { type AnswerRecord, deleteAnswer, listAnswers } from '@/services/recordings';
 
@@ -31,7 +32,7 @@ function groupRecords(records: AnswerRecord[]): HistoryGroup[] {
       group.records.push(answer);
       if (answer.createdAt < group.createdAt) group.createdAt = answer.createdAt;
     } else {
-      const set = mockSets.find(item => item.questions.some(question => question.id === answer.question.id));
+      const set = [...mockSets, ...partPracticeSets].find(item => item.questions.some(question => question.id === answer.question.id));
       groups.set(answer.sessionId, {
         id: answer.sessionId,
         title: answer.sessionId.startsWith('mock-') ? (set?.title ?? '실전 모의고사') : answer.sessionId.startsWith('part-') ? (set ? `${set.title} · 파트 연습` : '파트별 연습') : answer.sessionId.startsWith('daily-') && dailyPractice.questions.some(question => question.id === answer.question.id) ? dailyPractice.title : '말하기 연습',

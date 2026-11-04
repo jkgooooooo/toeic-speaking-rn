@@ -13,9 +13,9 @@ export default function HomeScreen() {
       <Label accessibilityRole="header" style={styles.title}>{'한 문장씩,\n자신감이 쌓이도록.'}</Label>
     </View>
     <View style={[styles.feature, { backgroundColor: c.accent }]}>
-      <View style={styles.featureTop}><Label style={[styles.overline, { color: c.accentInk }]}>TODAY’S PRACTICE</Label><View style={[styles.pill, { backgroundColor: c.soft }]}><Label style={{ fontSize: 11, lineHeight: 18, fontFamily: fonts.medium, color: c.accentInk }}>Q5–7 · 약 3분</Label></View></View>
+      <View style={styles.featureTop}><Label style={[styles.overline, { color: c.accentInk }]}>TODAY’S PRACTICE</Label><View style={[styles.pill, { backgroundColor: c.soft }]}><Label style={{ fontSize: 11, lineHeight: 18, fontFamily: fonts.medium, color: c.accentInk }}>Q5 · 한 문제</Label></View></View>
       <View style={styles.featureMain}>
-        <View style={{ flex: 1, gap: 10 }}><Label style={[styles.featureTitle, { color: c.accentInk }]}>{'일상에 대해\n말해볼까요?'}</Label><Label style={{ fontSize: 13, color: c.accentInk }}>짧은 질문 3개로 시작해요.</Label></View>
+        <View style={{ flex: 1, gap: 10 }}><Label style={[styles.featureTitle, { color: c.accentInk }]}>{'일상에 대해\n말해볼까요?'}</Label><Label style={{ fontSize: 13, color: c.accentInk }}>짧은 질문 하나로 시작해요.</Label></View>
         <View style={[styles.orb, { backgroundColor: c.accentInk }]}><Icon name="pulse-outline" size={27} color={c.accent} /></View>
       </View>
     </View>
@@ -29,10 +29,17 @@ export default function HomeScreen() {
         <View style={{ flex: 1, gap: 2 }}><Label style={{ fontFamily: fonts.bold, fontSize: 14 }}>{title}</Label><Label style={{ fontSize: 12, lineHeight: 19, color: c.muted }}>{note}</Label></View>
       </View>)}
     </View>
-    <ActionButton title="오늘의 연습 시작" onPress={() => router.push('/practice')} />
-    <Pressable accessibilityRole="button" onPress={() => router.navigate('/mock-tests')} style={({ pressed }) => [styles.fullTest, { borderTopColor: c.line, opacity: pressed ? 0.6 : 1 }]}>
-      <View style={[styles.smallIcon, { backgroundColor: c.soft }]}><Icon name="layers-outline" color={c.primary} size={19} /></View><View style={{ flex: 1, gap: 3 }}><Label style={{ fontSize: 14, fontFamily: fonts.bold }}>시험 전체를 연습하고 싶다면</Label><Label style={{ color: c.muted, fontSize: 12 }}>11문항 실전 모의고사</Label></View><Icon name="arrow-up-outline" size={16} />
-    </Pressable>
+    <ActionButton title="한 문제 시작하기" onPress={() => router.push('/practice?mode=single')} />
+    <ActionButton title="다른 질문 고르기 · 10문제" icon="list-outline" secondary onPress={() => router.push('/quick-practice')} />
+    <View style={{ gap: 12 }}>
+      <Label style={{ fontFamily: fonts.bold, fontSize: 16 }}>다른 연습도 해볼까요?</Label>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {([['book-outline', '짧은 지문 읽기', 'mock1-q1'], ['chatbubble-outline', '의견 말하기', 'mock1-q11']] as const).map(([icon, title, questionId]) => <Pressable key={questionId} accessibilityRole="button" onPress={() => router.push({ pathname: '/mock', params: { set: 'mock1', questionId } })} style={({ pressed }) => ({ flex: 1, backgroundColor: c.panel, borderRadius: 18, padding: 16, gap: 10, minHeight: 96, opacity: pressed ? 0.6 : 1 })}><Icon name={icon} color={c.primary} /><Label style={{ fontFamily: fonts.medium, fontSize: 13 }}>{title}</Label></Pressable>)}
+      </View>
+    </View>
+    {([['albums-outline', '파트별로 연습하기', '원하는 유형부터 차근차근', '/parts'], ['layers-outline', '실전 모의고사 풀기', '11문항을 시험처럼', '/mock-list']] as const).map(([icon, title, description, path]) => <Pressable key={path} accessibilityRole="button" onPress={() => router.push(path)} style={({ pressed }) => [styles.fullTest, { borderTopColor: c.line, opacity: pressed ? 0.6 : 1 }]}>
+      <View style={[styles.smallIcon, { backgroundColor: c.soft }]}><Icon name={icon} color={c.primary} size={19} /></View><View style={{ flex: 1, gap: 3 }}><Label style={{ fontSize: 14, fontFamily: fonts.bold }}>{title}</Label><Label style={{ color: c.muted, fontSize: 12 }}>{description}</Label></View><Icon name="arrow-forward-outline" size={16} />
+    </Pressable>)}
   </Screen>;
 }
 

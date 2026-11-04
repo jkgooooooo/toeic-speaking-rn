@@ -4,7 +4,7 @@ import * as Speech from 'expo-speech';
 import { useEffect, useId, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { mockCues, mockDirections, mockIntroduction, type MockPart, type MockSet } from '@/content/mock';
+import { mockCues, mockDirections, practiceDirections, mockIntroduction, type MockPart, type MockSet } from '@/content/mock';
 import { clearMockSession, loadMockSession, saveMockSession, type MockResume } from '@/features/mock/mock-resume';
 import { checkSignal, playCue, SessionInterrupted, speak } from '@/services/audio-tasks';
 import { type AnswerRecord, saveAnswer } from '@/services/recordings';
@@ -204,7 +204,7 @@ export function useMockSession(set: MockSet, voiceId?: string, partial = false) 
       const stages = (stage: VoiceStage) => { if (mounted.current && !signal.aborted) setVoiceStage(stage); };
       if (voiceId.startsWith('supertonic-')) {
         update({ phase: 'voice_setup' });
-        const firstText = partial ? mockDirections[mockQuestions[0].part] : mockIntroduction;
+        const firstText = partial ? practiceDirections(mockQuestions[0], mockQuestions.length === 1) : mockIntroduction;
         await warmSupertonic([firstText], voiceId, signal, (completed, total) => {
           if (mounted.current && !signal.aborted) setVoicePreparation({ completed, total });
         }, stages);
@@ -215,7 +215,7 @@ export function useMockSession(set: MockSet, voiceId?: string, partial = false) 
         let part: MockPart | undefined;
         for (const current of mockQuestions) {
           if (current.part !== part) {
-            upcoming.push(mockDirections[current.part]);
+            upcoming.push(partial ? practiceDirections(current, mockQuestions.length === 1) : mockDirections[current.part]);
             part = current.part;
             if (part === 'short') upcoming.push(set.shortContext);
             if (part === 'table') upcoming.push(mockCues.prepare, set.tableContext);
@@ -260,7 +260,7 @@ export function useMockSession(set: MockSet, voiceId?: string, partial = false) 
         update({ index, remaining: 0 });
         if (current.part !== previousPart) {
           update({ phase: 'directions' });
-          await narrate(mockDirections[current.part]);
+          await narrate(partial ? practiceDirections(current, mockQuestions.length === 1) : mockDirections[current.part]);
           previousPart = current.part;
           if (current.part === 'short') {
             update({ phase: 'scenario' });

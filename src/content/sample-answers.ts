@@ -1,5 +1,5 @@
-import { dailyPractice } from './daily';
 import { mockSets } from './mock';
+import { partPracticeSample } from './part-practice';
 
 const library = 'This picture was taken in a library. In the foreground, a man is sitting at a table and reading a book. On the left, a woman is reaching for a book on a shelf. In the background, another woman is arranging books at a counter.';
 const park = 'This picture was taken in a park. On the left, a person is watering flowers. In the center, a man is jogging along a path. On the right, two people are sitting on a bench and talking. There are many trees and buildings in the background.';
@@ -36,9 +36,23 @@ const samples: Record<string, string[]> = {
   ],
 };
 
+const dailySamples: Record<string, string> = {
+  'weekend-5': samples.mock1[4],
+  'weekend-6': samples.mock1[5],
+  'weekend-7': samples.mock1[6],
+  'daily-morning': 'I usually have breakfast and check my schedule before I leave home.',
+  'daily-lunch': 'I usually have lunch at a small restaurant near my workplace.',
+  'daily-cafe': 'I prefer studying at home because it is quiet and I can focus better.',
+  'daily-transport': 'I usually take the bus because it is convenient and the bus stop is close to my home.',
+  'daily-shopping': 'I prefer shopping in a store because I can see the products before I buy them.',
+  'daily-trip': 'I would like to visit a quiet town by the sea. I enjoy walking near the water, and I would like to try local food there.',
+  'daily-skill': 'I would like to learn how to cook different kinds of food. I could prepare meals for my family and try new recipes on weekends.',
+};
+
 export function sampleAnswer(questionId: string): string | undefined {
-  const dailyIndex = dailyPractice.questions.findIndex(question => question.id === questionId);
-  if (dailyIndex >= 0) return samples.mock1[dailyIndex + 4];
+  if (dailySamples[questionId]) return dailySamples[questionId];
+  const practiceSample = partPracticeSample(questionId);
+  if (practiceSample) return practiceSample;
   for (const set of mockSets) {
     const index = set.questions.findIndex(question => question.id === questionId);
     if (index >= 0) return samples[set.id]?.[index] || set.questions[index].prompt;

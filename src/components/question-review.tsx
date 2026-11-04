@@ -8,6 +8,7 @@ import { clearExamplePlayback, registerExamplePlayback, stopActiveAnswerPlayer }
 import { ActionButton, Label, Notice } from '@/components/ui';
 import { dailyPractice, type PracticeQuestion } from '@/content/daily';
 import { mockSets } from '@/content/mock';
+import { partPracticeSets } from '@/content/part-practice';
 import { sampleAnswer } from '@/content/sample-answers';
 import { fonts, usePalette } from '@/design/theme';
 import { speak } from '@/services/audio-tasks';
@@ -27,7 +28,7 @@ export function QuestionReview({ question, answerId, onBookmarkChange }: { quest
   const controller = useRef<AbortController | null>(null);
   const player = useAudioPlayer(null);
   const sample = sampleAnswer(question.id);
-  const set = mockSets.find(item => item.questions.some(q => q.id === question.id));
+  const set = [...mockSets, ...partPracticeSets].find(item => item.questions.some(q => q.id === question.id));
   const canRetry = !!set || dailyPractice.questions.some(item => item.id === question.id);
 
   useEffect(() => {

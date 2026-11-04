@@ -26,7 +26,7 @@ export default function PracticeScreen() {
   const [previousAnswer, setPreviousAnswer] = useState<AnswerRecord | null>(null);
   useEffect(() => { let active = true; if (retryOf) void listAnswers().then(result => { if (active) setPreviousAnswer(result.records.find(answer => answer.id === retryOf) ?? null); }).catch(() => {}); return () => { active = false; }; }, [retryOf]);
   const specific = dailyPractice.questions.filter(question => question.id === questionId);
-  const questions = specific.length ? specific : mode === 'single' ? dailyPractice.questions.slice(0, 1) : dailyPractice.questions;
+  const questions = specific.length ? specific : mode === 'single' ? dailyPractice.questions.slice(0, 1) : dailyPractice.questions.slice(0, 3);
   const singleQuestion = questions.length === 1;
   const { voiceId, loading, error } = useVoiceSettings();
   const session = usePracticeSession(questions, voiceId);
@@ -59,8 +59,9 @@ export default function PracticeScreen() {
   return <Screen>
     <TopBar title={singleQuestion ? '한 문항 연습' : '오늘의 작은 연습'} back onBack={leave} />
     {session.phase === 'idle' ? <>
-      <Title subtitle={singleQuestion ? '질문을 듣고 다시 답변해봐요.' : '질문 3개에 차례대로 답해봐요. 준비되면 시작하세요.'}>{'일상에 대해\n말해볼까요?'}</Title>
+      <Title subtitle={singleQuestion ? '질문을 듣고 편하게 답변해봐요.' : '질문 3개에 차례대로 답해봐요. 준비되면 시작하세요.'}>{'일상에 대해\n말해볼까요?'}</Title>
       <View style={{ padding: 23, borderRadius: 26, backgroundColor: c.accent, gap: 13 }}><Label style={{ fontSize: 11, letterSpacing: 1.2, color: c.accentInk, fontFamily: fonts.bold }}>TODAY’S PRACTICE</Label><Label style={{ color: c.accentInk, fontSize: 23, lineHeight: 34, fontFamily: fonts.medium }}>{questions[0].prompt}</Label><Label style={{ fontSize: 12, color: c.accentInk }}>준비 3초 · 답변 {questions.map(q => q.responseSeconds).join(' / ')}초</Label></View>
+      <Notice>AI 평가 없이 답변을 녹음하고 다시 들을 수 있어요.</Notice>
       <PartGuide part="short" />
       <VoiceStartOptions />
       <Notice>처음 시작할 때 마이크 권한을 요청해요. 이어폰을 사용해주세요.</Notice>

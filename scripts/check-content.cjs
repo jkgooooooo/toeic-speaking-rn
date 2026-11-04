@@ -13,15 +13,16 @@ function loadTs(relative, dependencies = {}) {
   const module = { exports: {} };
   vm.runInNewContext(output, { module, exports: module.exports, require: name => {
     if (name in dependencies) return dependencies[name];
-    if (name.endsWith('.png')) { assert.ok(fs.existsSync(path.resolve(path.dirname(file), name)), `Missing image ${name}`); return name; }
+    if (name.endsWith('.png') || name.endsWith('.jpg')) { assert.ok(fs.existsSync(path.resolve(path.dirname(file), name)), `Missing image ${name}`); return name; }
     throw new Error(`Unexpected import ${name} in ${relative}`);
   }, console, JSON, Error, Set, Map }, { filename: file });
   return module.exports;
 }
 
 const daily = loadTs('src/content/daily.ts');
-const mock = loadTs('src/content/mock.ts');
-const samples = loadTs('src/content/sample-answers.ts', { './daily': daily, './mock': mock });
+const partPractice = loadTs('src/content/part-practice.ts');
+const mock = loadTs('src/content/mock.ts', { './part-practice': partPractice });
+const samples = loadTs('src/content/sample-answers.ts', { './daily': daily, './mock': mock, './part-practice': partPractice });
 const times = [[45,45],[45,45],[45,30],[45,30],[3,15],[3,15],[3,30],[3,15],[3,15],[3,30],[45,60]];
 assert.equal(mock.mockSets.length, 3);
 const ids = new Set();
@@ -42,6 +43,22 @@ for (const set of mock.mockSets) {
 }
 assert.equal(photos.size, 6, 'each set should have distinct photos');
 for (const question of daily.dailyPractice.questions) assert.ok(samples.sampleAnswer(question.id), question.id);
+assert.equal(partPractice.partPracticeSets.length, 20);
+for (const part of ['reading', 'photo', 'short', 'table', 'opinion']) {
+  const questions = partPractice.partPracticeSets.flatMap(set => set.questions.filter(q => q.part === part));
+  assert.equal(questions.length, 20, `${part} count`);
+  assert.equal(new Set(questions.map(q => q.id)).size, 20, `${part} IDs`);
+  for (const question of questions) assert.ok(samples.sampleAnswer(question.id), question.id);
+  if (part === 'photo') assert.equal(new Set(questions.map(q => q.image)).size, 20, 'distinct practice photos');
+}
+for (const set of partPractice.partPracticeSets) {
+  const q = set.questions.find(question => question.part === 'table');
+  const answer = samples.sampleAnswer(q.id);
+  assert.ok(answer.includes(set.schedule.rows[0][0]), `${q.id} time`);
+  assert.ok(answer.includes(q.number === 9 ? set.schedule.rows[0][2] : set.schedule.rows[1][1]), `${q.id} detail`);
+  assert.equal(mock.getMockSet(set.id).id, set.id);
+}
+
 
 (async () => {
   const values = new Map();
@@ -72,5 +89,5 @@ for (const question of daily.dailyPractice.questions) assert.ok(samples.sampleAn
   assert.equal((await bookmarks.listBookmarkedIds()).join(','), 'mock2-q5');
   await bookmarks.setBookmarked('mock2-q5', false);
   assert.equal(await bookmarks.isBookmarked('mock2-q5'), false);
-  console.log('Content and resume checks passed: 3 sets, 33 questions, sample answers, resume, legacy checkpoint and bookmarks.');
+  console.log('Content and resume checks passed: 3 mock sets, 100 part questions, sample answers, resume, legacy checkpoint and bookmarks.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

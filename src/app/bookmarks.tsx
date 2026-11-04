@@ -6,13 +6,14 @@ import { QuestionReview } from '@/components/question-review';
 import { Icon, Label, Notice, Screen, Title, TopBar } from '@/components/ui';
 import { dailyPractice, type PracticeQuestion } from '@/content/daily';
 import { mockSets } from '@/content/mock';
+import { partPracticeSets } from '@/content/part-practice';
 import { fonts, usePalette } from '@/design/theme';
 import { listBookmarkedIds } from '@/services/bookmarks';
 
 type Item = { question: PracticeQuestion; category: string; description?: string };
 const catalog: Item[] = [
   ...dailyPractice.questions.map(question => ({ question, category: dailyPractice.title })),
-  ...mockSets.flatMap(set => set.questions.map(question => ({ question, category: set.title, description: question.imageLabel }))),
+  ...[...mockSets, ...partPracticeSets].flatMap(set => set.questions.map(question => ({ question, category: set.title, description: question.imageLabel }))),
 ];
 
 export default function BookmarksScreen() {

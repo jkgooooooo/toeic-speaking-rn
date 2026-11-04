@@ -1,4 +1,5 @@
 import type { PracticeQuestion } from './daily';
+import { partPracticeSets } from './part-practice';
 
 export type MockPart = 'reading' | 'photo' | 'short' | 'table' | 'opinion';
 export type MockQuestion = PracticeQuestion & { part: MockPart; image?: number; imageLabel?: string; showQuestion: boolean };
@@ -12,6 +13,15 @@ export const mockDirections: Record<MockPart, string> = {
   table: 'Questions eight through ten. Answer three questions using the information provided. First, you have forty five seconds to study the information. After each question, you have three seconds to prepare. Answer questions eight and nine in fifteen seconds each. Question ten will be played twice, and you will have thirty seconds to answer.',
   opinion: 'Question eleven. Give your opinion and explain your reasons. You will have 45 seconds to prepare and 60 seconds to speak.',
 };
+export function practiceDirections(question: MockQuestion, single: boolean): string {
+  if (!single) return mockDirections[question.part];
+  if (question.part === 'reading') return 'Read the text aloud. You will have 45 seconds to prepare and 45 seconds to read.';
+  if (question.part === 'photo') return 'Describe the picture in as much detail as you can. You will have 45 seconds to prepare and 30 seconds to speak.';
+  if (question.part === 'table') return `Study the information for 45 seconds. Listen to the question${question.number === 10 ? ' twice' : ''}. You will have three seconds to prepare and ${question.responseSeconds} seconds to answer.`;
+  if (question.part === 'opinion') return 'Give your opinion and explain your reasons. You will have 45 seconds to prepare and 60 seconds to speak.';
+  return `Listen to the question. You will have three seconds to prepare and ${question.responseSeconds} seconds to answer.`;
+}
+
 export const mockCues = {
   prepare: 'Begin preparing now.',
   reading: 'Begin reading aloud now.',
@@ -111,5 +121,5 @@ export const mockSets: MockSet[] = [
 ];
 
 export function getMockSet(id?: string): MockSet | undefined {
-  return mockSets.find(set => set.id === id);
+  return mockSets.find(set => set.id === id) ?? partPracticeSets.find(set => set.id === id);
 }

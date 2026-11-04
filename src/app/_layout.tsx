@@ -23,7 +23,10 @@ export default function RootLayout() {
   return <GestureHandlerRootView style={{ flex: 1 }}><SettingsProvider><StatusBar style="auto" /><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.background } }}>
     <Stack.Screen name="(tabs)" />
     <Stack.Screen name="practice" options={{ gestureEnabled: false }} />
+    <Stack.Screen name="quick-practice" />
     <Stack.Screen name="mock" options={{ gestureEnabled: false }} />
+    <Stack.Screen name="parts" />
+    <Stack.Screen name="mock-list" />
     <Stack.Screen name="audio-check" />
     <Stack.Screen name="bookmarks" />
     <Stack.Screen name="settings" options={{ presentation: 'modal' }} />

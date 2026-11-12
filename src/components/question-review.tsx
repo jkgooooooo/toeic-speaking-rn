@@ -63,6 +63,7 @@ export function QuestionReview({ question, answerId, onBookmarkChange }: { quest
     else router.push({ pathname: '/practice', params: { questionId: question.id, ...(answerId ? { retryOf: answerId } : {}) } });
   }
   return <View style={{ gap: 10 }}>
+    {answerId && <ActionButton title="AI 피드백 살펴보기" icon="sparkles-outline" onPress={() => router.push({ pathname: '/feedback', params: { answerId } })} />}
     {error && <Notice error>{error}</Notice>}
     {canRetry && <ActionButton title={marked ? '북마크 해제' : '다시 풀 문제로 저장'} icon={marked ? 'bookmark' : 'bookmark-outline'} secondary busy={busy || loading} onPress={() => { void toggleBookmark(); }} />}
     {canRetry && <ActionButton title="이 문제 다시 풀기" icon="refresh-outline" secondary onPress={retry} />}

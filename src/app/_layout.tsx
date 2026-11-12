@@ -29,6 +29,7 @@ export default function RootLayout() {
     <Stack.Screen name="mock-list" />
     <Stack.Screen name="audio-check" />
     <Stack.Screen name="bookmarks" />
+    <Stack.Screen name="feedback" />
     <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
   </Stack></SettingsProvider></GestureHandlerRootView>;
 }

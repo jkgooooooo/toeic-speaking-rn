@@ -2,6 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 
 import type { PracticeQuestion } from '@/content/daily';
+import Storage from '@/services/storage';
 
 export type AnswerRecord = {
   schemaVersion: 1;
@@ -80,6 +81,7 @@ export async function deleteAnswer(record: AnswerRecord) {
   if (!/^[\w-]+$/.test(record.id) || record.filename !== `${record.id}.m4a`) {
     throw new Error('이 기록은 삭제할 수 없어요.');
   }
+  await Storage.removeItem(`speaking.feedback.demo.v1.${record.id}`);
   const dir = folder();
   const audio = new File(dir, record.filename);
   const metadata = new File(dir, `${record.id}.json`);
